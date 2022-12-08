@@ -1,17 +1,32 @@
 #include <iostream>
+#include <vector>
 #include "libCZI/libCZI.h"
 
 int main()
 {
-    // auto stream = libCZI::CreateStreamFromFile(LR"(W:\Data\TestData\DCV_30MB.czi)");
-    // auto cziReader = libCZI::CreateCZIReader();
-    // cziReader->Open(stream);
-    // cziReader->EnumerateSubBlocks(
-    //     [](int idx, const libCZI::SubBlockInfo &info)
-    //     {
-    //         std::cout << "Index " << idx << ": " << libCZI::Utils::DimCoordinateToString(&info.coordinate) << " Rect=" << info.logicalRect << std::endl;
-    //         return true;
-    //     });
-    std::cout << "Done";
+    auto stream = libCZI::CreateInputOutputStreamForFile(LR"(/scratch/TS_40X_HE_ICAIRD_2200.czi)");
+    auto readerWriter = libCZI::CreateCZIReaderWriter();
+    readerWriter->Create(stream);
+    std::vector<int> ids;
+    readerWriter->EnumerateSubBlocks(
+        [&ids](int idx, const libCZI::SubBlockInfo &info)
+        {
+            if (info.GetZoom() == 1.)
+            {
+                ids.push_back(idx);
+            }
+            return true;
+        });
+    std::cout << "Removing " << ids.size() << " subblocks" << std::endl;
+    int i = 0;
+    for (auto id : ids)
+    {
+        readerWriter->RemoveSubBlock(id);
+        i++;
+        std::cout << "Removed " << i << " of " << ids.size() << std::endl;
+    }
+    std::cout << "Closing" << std::endl;
+    readerWriter->Close();
+    std::cout << "Done" << std::endl;
     return 0;
 }
