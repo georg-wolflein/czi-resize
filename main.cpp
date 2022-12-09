@@ -20,18 +20,10 @@ int process(const std::string &inFile, const std::string &outFile)
     reader->Open(readStream);
     writer->Create(writeStream, nullptr);
 
-    // // Read metadata
-    // size_t readMetadataSize;
-    // auto readMetadata = reader->ReadMetadataSegment();
-    // auto readMetadataPtr = readMetadata->GetRawData(libCZI::IMetadataSegment::XmlMetadata, &readMetadataSize);
-    // auto readMetadataXml = std::string(static_cast<const char *>(readMetadataPtr.get()), readMetadataSize);
-    // // std::cout << "META: " << readMetadataXml << std::endl;
-
     int countSubBlock = 0,
         countSubBlocksWithData = 0,
         countSubBlocksWithMetadata = 0,
         countSubBlocksWithAttachment = 0;
-    // int mIndex = 0;
     int numSubBlocks = reader->GetStatistics().subBlockCount;
     reader->EnumerateSubBlocks(
         [&](int idx, const libCZI::SubBlockInfo &info)
@@ -53,8 +45,7 @@ int process(const std::string &inFile, const std::string &outFile)
             addSubBlockInfo.coordinate.Set(libCZI::DimensionIndex::C, c);
             addSubBlockInfo.coordinate.Set(libCZI::DimensionIndex::Z, z);
             addSubBlockInfo.mIndexValid = true;
-            addSubBlockInfo.mIndex = info.mIndex; // TODO: check if this is correct
-            // addSubBlockInfo.mIndex = mIndex++;
+            addSubBlockInfo.mIndex = info.mIndex; // this needs to be modified if we are actually deleting sub-blocks
             addSubBlockInfo.x = info.logicalRect.x;
             addSubBlockInfo.y = info.logicalRect.y;
             addSubBlockInfo.logicalWidth = info.logicalRect.w;
@@ -84,21 +75,9 @@ int process(const std::string &inFile, const std::string &outFile)
             return true;
         });
 
-    // // Write metadata
-    // auto info = libCZI::PrepareMetadataInfo();
-    // auto builder = writer->GetPreparedMetadata(info);
-    // // builder->GetRootNode()->GetChildNode(L"Metadata")->GetChildNode(L"Information")->GetChildNode(L"Image")->;
-    // std::cout << builder->GetXml() << std::endl;
-
-    // libCZI::WriteMetadataInfo metaDataInfo;
-    // metaDataInfo.szMetadata = readMetadataXml.c_str();
-    // metaDataInfo.szMetadataSize = readMetadataXml.size() + 1;
-    // metaDataInfo.ptrAttachment = nullptr;
-    // metaDataInfo.attachmentSize = 0;
-    // writer->SyncWriteMetadata(metaDataInfo);
-
     reader->Close();
     writer->Close();
+
     std::cout << "Done: " << inFile << " -> " << outFile << std::endl;
 
     std::cout << "  sub-blocks: " << countSubBlock << std::endl;
