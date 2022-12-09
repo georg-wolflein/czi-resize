@@ -15,12 +15,12 @@ int main()
         countSubBlocksWithData = 0,
         countSubBlocksWithMetadata = 0,
         countSubBlocksWithAttachment = 0;
-
+    int mIndex = 0;
     reader->EnumerateSubBlocks(
         [&](int idx, const libCZI::SubBlockInfo &info)
         {
-            if (info.GetZoom() == 1.)
-                return true;
+            // if (info.GetZoom() == 1.)
+            //     return true;
             std::cout << "Processing " << idx << std::endl;
             auto subBlock = reader->ReadSubBlock(idx);
             size_t sizeData, sizeMetadata, sizeAttachment;
@@ -46,8 +46,11 @@ int main()
             addSubBlockInfo.physicalWidth = info.physicalSize.w;
             addSubBlockInfo.physicalHeight = info.physicalSize.h;
             addSubBlockInfo.PixelType = info.pixelType;
-            addSubBlockInfo.ptrData = data.get();
-            addSubBlockInfo.dataSize = sizeData;
+            if (info.GetZoom() != 1.)
+            {
+                addSubBlockInfo.ptrData = data.get();
+                addSubBlockInfo.dataSize = sizeData;
+            }
             addSubBlockInfo.ptrSbBlkMetadata = metadata.get();
             addSubBlockInfo.sbBlkMetadataSize = sizeMetadata;
             addSubBlockInfo.ptrSbBlkAttachment = attachment.get();
