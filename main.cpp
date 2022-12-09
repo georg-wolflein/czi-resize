@@ -56,7 +56,7 @@ int process(const std::string &inFile, const std::string &outFile)
             addSubBlockInfo.physicalWidth = info.physicalSize.w;
             addSubBlockInfo.physicalHeight = info.physicalSize.h;
             addSubBlockInfo.PixelType = info.pixelType;
-            if (info.GetZoom() != 1.)
+            if (info.GetZoom() != 1.) // don't write data at lowest magnification level
             {
                 addSubBlockInfo.ptrData = data.get();
                 addSubBlockInfo.dataSize = sizeData;
