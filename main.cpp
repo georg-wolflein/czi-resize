@@ -20,7 +20,7 @@ int main()
         [&](int idx, const libCZI::SubBlockInfo &info)
         {
             if (info.GetZoom() == 1.)
-                return;
+                return true;
             std::cout << "Processing " << idx << std::endl;
             auto subBlock = reader->ReadSubBlock(idx);
             size_t sizeData, sizeMetadata, sizeAttachment;
