@@ -36,15 +36,17 @@ int process(const std::string &inFile, const std::string &outFile)
             auto metadata = subBlock->GetRawData(libCZI::ISubBlock::Metadata, &sizeMetadata);
             auto attachment = subBlock->GetRawData(libCZI::ISubBlock::Attachment, &sizeAttachment);
 
-            int c = 0, z = 0;
+            int c = 0, z = 0, s = 0;
             info.coordinate.TryGetPosition(libCZI::DimensionIndex::C, &c);
             info.coordinate.TryGetPosition(libCZI::DimensionIndex::Z, &z);
+            info.coordinate.TryGetPosition(libCZI::DimensionIndex::S, &s);
 
             libCZI::AddSubBlockInfoMemPtr addSubBlockInfo;
             addSubBlockInfo.Clear();
             addSubBlockInfo.SetCompressionMode(info.GetCompressionMode());
             addSubBlockInfo.coordinate.Set(libCZI::DimensionIndex::C, c);
             addSubBlockInfo.coordinate.Set(libCZI::DimensionIndex::Z, z);
+            addSubBlockInfo.coordinate.Set(libCZI::DimensionIndex::S, s);
             addSubBlockInfo.mIndexValid = true;
             addSubBlockInfo.mIndex = info.mIndex; // this needs to be modified if we are actually deleting sub-blocks
             addSubBlockInfo.x = info.logicalRect.x;
