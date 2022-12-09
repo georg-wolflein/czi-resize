@@ -13,6 +13,7 @@ std::wstring stringToWstring(const std::string &t_str)
 
 int process(const std::string &inFile, const std::string &outFile)
 {
+    std::cout << "Converting " << inFile << " -> " << outFile << std::endl;
     auto readStream = libCZI::CreateStreamFromFile(stringToWstring(inFile).c_str());
     auto writeStream = libCZI::CreateOutputStreamForFile(stringToWstring(outFile).c_str(), true);
     auto reader = libCZI::CreateCZIReader();
@@ -78,7 +79,7 @@ int process(const std::string &inFile, const std::string &outFile)
     reader->Close();
     writer->Close();
 
-    std::cout << "Done: " << inFile << " -> " << outFile << std::endl;
+    std::cout << "Done." << std::endl;
 
     std::cout << "  sub-blocks: " << countSubBlock << std::endl;
     std::cout << "  sub-blocks with data: " << countSubBlocksWithData << std::endl;
