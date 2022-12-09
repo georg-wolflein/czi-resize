@@ -1,27 +1,42 @@
 #include <iostream>
-#include <vector>
+#include <string>
+#include <codecvt>
+#include <locale>
 #include "libCZI/libCZI.h"
 
-int main()
+std::wstring stringToWstring(const std::string &t_str)
 {
-    auto readStream = libCZI::CreateStreamFromFile(LR"(/scratch/TS_40X_HE_ICAIRD_2200.czi)");
-    auto writeStream = libCZI::CreateOutputStreamForFile(LR"(/scratch/TS_40X_HE_ICAIRD_2200_out.czi)", true);
+    typedef std::codecvt_utf8<wchar_t> convert_type;
+    std::wstring_convert<convert_type, wchar_t> converter;
+    return converter.from_bytes(t_str);
+}
+
+int process(const std::string &inFile, const std::string &outFile)
+{
+    auto readStream = libCZI::CreateStreamFromFile(stringToWstring(inFile).c_str());
+    auto writeStream = libCZI::CreateOutputStreamForFile(stringToWstring(outFile).c_str(), true);
     auto reader = libCZI::CreateCZIReader();
     auto writer = libCZI::CreateCZIWriter();
     reader->Open(readStream);
-    writer->Create(writeStream, nullptr); // TODO: add metadata
+    writer->Create(writeStream, nullptr);
+
+    // // Read metadata
+    // size_t readMetadataSize;
+    // auto readMetadata = reader->ReadMetadataSegment();
+    // auto readMetadataPtr = readMetadata->GetRawData(libCZI::IMetadataSegment::XmlMetadata, &readMetadataSize);
+    // auto readMetadataXml = std::string(static_cast<const char *>(readMetadataPtr.get()), readMetadataSize);
+    // // std::cout << "META: " << readMetadataXml << std::endl;
 
     int countSubBlock = 0,
         countSubBlocksWithData = 0,
         countSubBlocksWithMetadata = 0,
         countSubBlocksWithAttachment = 0;
-    int mIndex = 0;
+    // int mIndex = 0;
+    int numSubBlocks = reader->GetStatistics().subBlockCount;
     reader->EnumerateSubBlocks(
         [&](int idx, const libCZI::SubBlockInfo &info)
         {
-            // if (info.GetZoom() == 1.)
-            //     return true;
-            std::cout << "Processing " << idx << std::endl;
+            std::cout << int((double)idx / numSubBlocks * 100) << "%\r";
             auto subBlock = reader->ReadSubBlock(idx);
             size_t sizeData, sizeMetadata, sizeAttachment;
             auto data = subBlock->GetRawData(libCZI::ISubBlock::Data, &sizeData);
@@ -39,6 +54,7 @@ int main()
             addSubBlockInfo.coordinate.Set(libCZI::DimensionIndex::Z, z);
             addSubBlockInfo.mIndexValid = true;
             addSubBlockInfo.mIndex = info.mIndex; // TODO: check if this is correct
+            // addSubBlockInfo.mIndex = mIndex++;
             addSubBlockInfo.x = info.logicalRect.x;
             addSubBlockInfo.y = info.logicalRect.y;
             addSubBlockInfo.logicalWidth = info.logicalRect.w;
@@ -51,9 +67,9 @@ int main()
                 addSubBlockInfo.ptrData = data.get();
                 addSubBlockInfo.dataSize = sizeData;
             }
-            addSubBlockInfo.ptrSbBlkMetadata = metadata.get();
-            addSubBlockInfo.sbBlkMetadataSize = sizeMetadata;
-            addSubBlockInfo.ptrSbBlkAttachment = attachment.get();
+            // addSubBlockInfo.ptrSbBlkMetadata = metadata.get();
+            // addSubBlockInfo.sbBlkMetadataSize = sizeMetadata;
+            addSubBlockInfo.ptrSbBlkAttachment = attachment.get(); // for some reason we need to retain the attachments
             addSubBlockInfo.sbBlkAttachmentSize = sizeAttachment;
 
             writer->SyncAddSubBlock(addSubBlockInfo);
@@ -67,19 +83,44 @@ int main()
                 countSubBlocksWithAttachment++;
             return true;
         });
-    std::cout << "Finishing..." << std::endl;
 
-    // auto prepareMetadataInfo = libCZI::PrepareMetadataInfo();
-    // auto metadata = writer->GetPreparedMetadata(prepareMetadataInfo);
-    // writer->SyncWriteMetadata(metadata);
+    // // Write metadata
+    // auto info = libCZI::PrepareMetadataInfo();
+    // auto builder = writer->GetPreparedMetadata(info);
+    // // builder->GetRootNode()->GetChildNode(L"Metadata")->GetChildNode(L"Information")->GetChildNode(L"Image")->;
+    // std::cout << builder->GetXml() << std::endl;
+
+    // libCZI::WriteMetadataInfo metaDataInfo;
+    // metaDataInfo.szMetadata = readMetadataXml.c_str();
+    // metaDataInfo.szMetadataSize = readMetadataXml.size() + 1;
+    // metaDataInfo.ptrAttachment = nullptr;
+    // metaDataInfo.attachmentSize = 0;
+    // writer->SyncWriteMetadata(metaDataInfo);
 
     reader->Close();
     writer->Close();
-    std::cout << "Done." << std::endl;
+    std::cout << "Done: " << inFile << " -> " << outFile << std::endl;
 
-    std::cout << "sub-blocks: " << countSubBlock << std::endl;
-    std::cout << "sub-blocks with data: " << countSubBlocksWithData << std::endl;
-    std::cout << "sub-blocks with metadata: " << countSubBlocksWithMetadata << std::endl;
-    std::cout << "sub-blocks with attachment: " << countSubBlocksWithAttachment << std::endl;
+    std::cout << "  sub-blocks: " << countSubBlock << std::endl;
+    std::cout << "  sub-blocks with data: " << countSubBlocksWithData << std::endl;
+    std::cout << "  sub-blocks with metadata: " << countSubBlocksWithMetadata << std::endl;
+    std::cout << "  sub-blocks with attachment: " << countSubBlocksWithAttachment << std::endl;
     return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    std::string inFile = "";
+    std::string outFile = "";
+    if (argc == 3)
+    {
+        inFile = argv[1];
+        outFile = argv[2];
+    }
+    else
+    {
+        std::cout << "Usage: ./cziresize input_file output_file" << std::endl;
+        return 1;
+    }
+    process(inFile, outFile);
 }
