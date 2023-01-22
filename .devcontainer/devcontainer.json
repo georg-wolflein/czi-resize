@@ -16,6 +16,7 @@
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 	"mounts": [
-		"source=${localEnv:HOME}${localEnv:USERPROFILE}/Desktop/Scratch.nosync,target=/scratch,type=bind,consistency=cached"
-	]
+		"source=/media/gw66/BACKUPicair/TRANSORCE-HE_40X,target=/data,type=bind,consistency=cached"
+	],
+	"shutdownAction": "none" // keep container running
 }
