@@ -13,6 +13,12 @@ This tool will delete the sub-blocks at `zoom=1.0` (actually, it just removes th
 When reading the CZI file using a library like [pylibCZIrw](https://pypi.org/project/pylibCZIrw/), make sure you only access tiles at `zoom<=0.5`. 
 
 ## Installing
+First, clone this repository including submodules:
+```
+git clone https://github.com/georg-wolflein/czi-resize.git --recursive
+```
+
+Then, build the executable:
 ```
 mkdir build
 cd build
